@@ -23,20 +23,28 @@ int main (int argc, char *argv[]) {
     init_node_hashtable(hsh_tbl.size);
 
     read_nodes();
-    PrintSourceArray(SourcesArray, sSize);
-    PrintLinArray(LinElArray, lSize);
-    PrintNonLinArray(NonLinElArray, nSize);
-    free_arr();
+    // PrintSourceArray(SourcesArray, sSize);
+    // PrintLinArray(LinElArray, lSize);
+    // PrintNonLinArray(NonLinElArray, nSize);
+    // free_arr();
 
-    print_list();
-    free_list();
+    // print_list();
+    // free_list();
 
     print_hash_table();
     print_hash_table_v2();
-    free_node_hashtable();
-
+    
     printf("group1 size: %d\n", group_1_size);
     printf("group2 size: %d\n", group_2_size);
 
+    init_DC_matrix_and_vectors(matrix_index - 1 + group_2_size);
+    
+    create_DC_system();
+    
+    print_DC_system();
+
+    free_DC_matrix_and_vectors();
+    
+    free_node_hashtable();
     return 0;
 }

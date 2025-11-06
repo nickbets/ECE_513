@@ -102,6 +102,7 @@ extern int group_2_size;
 extern gsl_matrix *G_tilda; // matrix G_tilda
 extern gsl_vector *x; // solution vector x, Voltages and Currents
 extern gsl_vector *e; // excitation vector e
+extern unsigned int group_2_index;
 
 unsigned int hash_function(const char *key, unsigned int table_size);
 void init_node_hashtable(unsigned int size);
@@ -112,6 +113,11 @@ void add_connected_element(char* node_name,int pos, element_type type);
 void print_hash_table () ;
 void print_hash_table_v2() ;
 enum group get_element_group(element_type type, int pos);
-
+void create_DC_system();
+void init_DC_matrix_and_vectors(int size);
+void free_DC_matrix_and_vectors();
+unsigned int get_node_matrix_index(char* node_name);
+void add_group_1_element(int pos, element_type type);
+void print_DC_system();
 
 #endif
