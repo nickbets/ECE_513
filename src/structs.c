@@ -10,6 +10,13 @@ NonLinearElementT *NonLinElArray;
 int sSize=0, lSize=0, nSize=0;
 el_listT list;
 
+int group_1_size = 0;
+int group_2_size = 0;
+
+gsl_matrix *G_tilda = NULL; // matrix G_tilda
+gsl_vector *x = NULL; // solution vector x, Voltages and Currents
+gsl_vector *e = NULL; // excitation vector e
+
 unsigned int hash_function(const char *key, unsigned int table_size) {
     unsigned int hash = 0;
     while (*key) {
@@ -203,23 +210,23 @@ node_index find_node(char* name)
     }
 
 
-        node *curr=NULL, *prev=NULL;
+    node *curr=NULL, *prev=NULL;
 
 
-        prev = hsh_tbl.table[hash];
-        while(prev != NULL) {
-            curr = prev->nxt;
-            // if (curr == NULL) {
-            //     break;
-            // }
-             if (strcmp(prev->name, name) == 0) 
+    prev = hsh_tbl.table[hash];
+    while(prev != NULL) {
+        curr = prev->nxt;
+        // if (curr == NULL) {
+        //     break;
+        // }
+        if (strcmp(prev->name, name) == 0) 
         {
             result.hash = hash;
             result.depth = 0;
             return result;
         }
-            prev = curr;
-        }
+        prev = curr;
+    }
 
         
 
@@ -340,4 +347,85 @@ void print_hash_table_v2() {
     }
 }
 
+enum group get_element_group(element_type type, int pos) {
+    
+    switch (type) {
+        case SOURCE:
+            if (SourcesArray[pos].type == V) {
+                    return GROUP_2;
+            }
+            else{
+                return GROUP_1;
+            }
+            break;
+        case LINEAR:
+            if (LinElArray[pos].type == L) {
+                return GROUP_2;
+            }
+            else {
+                return GROUP_1;
+            }
+            break;
+        default:
+            fprintf(stderr, "INVALID ELEMENT TYPE\n");
+            exit(EXIT_FAILURE);
+            break;
+    }
+}
 
+void init_DC_matrix_and_vectors(int size) {
+
+    G_tilda = gsl_matrix_calloc(size, size);
+    x = gsl_vector_calloc(size);
+    e = gsl_vector_calloc(size);
+
+    return;
+}
+
+void free_DC_matrix_and_vectors() {
+
+    if (G_tilda != NULL) {
+        gsl_matrix_free(G_tilda);
+        G_tilda = NULL;
+    }
+    if (x != NULL) {
+        gsl_vector_free(x);
+        x = NULL;
+    }
+    if (e != NULL) {
+        gsl_vector_free(e);
+        e = NULL;
+    }
+
+    return;
+}
+
+
+void add_group_1_element(int pos, element_type type) {
+
+    switch (type) {
+        case SOURCE:
+            if (SourcesArray[pos].type != I) {
+                fprintf(stderr, "Error: element is not Group 1\n");
+                exit(EXIT_FAILURE);
+            }
+
+
+            break;
+        case LINEAR:
+            if (LinElArray[pos].type == L) {
+                fprintf(stderr, "Error: element is not Group 1\n");
+                exit(EXIT_FAILURE);
+            }
+
+            // G_tilda[][] += 1.0 / LinElArray[pos].value;
+            break;
+        default:
+            fprintf(stderr, "INVALID ELEMENT TYPE\n");
+            exit(EXIT_FAILURE);
+            break;
+    }
+
+    
+
+}

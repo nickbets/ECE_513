@@ -8,8 +8,8 @@ OBJ      := $(SRC:.c=.o)
 DEPS     := $(OBJ:.o=.d)
 
 CSTD     ?= c17
-CFLAGS   ?= -std=$(CSTD) -Wall -Wextra -Wpedantic -O2 -g -MMD -MP -D_POSIX_C_SOURCE=200809L -fsanitize=address
-LDFLAGS  ?= -fsanitize=address
+CFLAGS   ?= -std=$(CSTD) -Wall -Wextra -Wpedantic -O2 -g -MMD -MP -D_POSIX_C_SOURCE=200809L -fsanitize=address 
+LDFLAGS  ?= -fsanitize=address -lgsl -lgslcblas -lm
 
 # ---- Default ----
 all: $(TARGET)

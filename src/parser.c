@@ -4,6 +4,8 @@
 #define _POSIX_C_SOURCE 200809L
 #include "parser.h"
 
+
+
 int read_file(char *filename) {
     FILE *file;
     char line[MAX_LINE_SIZE];
@@ -23,7 +25,7 @@ int read_file(char *filename) {
     int ignore_flag = 1;
 
     init_list();
-n
+
     while ((res = fgets(line, sizeof(line), file))) {
 
         if (ignore_flag == 1) {
@@ -682,6 +684,20 @@ void list_add(int pos, element_type type) {
         (list.tail)->nxt->nxt = NULL;
         list.tail = (list.tail)->nxt;
     }
+
+    // update group sizes //
+    switch (get_element_group(type, pos)) {
+        case GROUP_1:
+            group_1_size++;
+            break;
+        case GROUP_2:
+            group_2_size++;
+            break;
+        default:
+            fprintf(stderr, "Invalid group type\n");
+            break;
+    }
+
 }
 
 
