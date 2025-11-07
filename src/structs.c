@@ -97,25 +97,6 @@ void free_node_hashtable()
             // // free(*(node_hashtable[i].name));
         }
 
-        
-
-        // if (hsh_tbl[i].index != NULL) 
-        // {
-        //     free(node_hashtable[i].index);
-        // }
-        // if (node_hashtable[i].connected_elements != NULL) 
-        // {
-        //     for (int j=0; j<node_hashtable[i].depth_size; j++) {
-        //         // for (int k=0; k<node_hashtable[i].connected_el_num[k]; k++) {
-        //         //     free()
-        //         // }
-        //         if (node_hashtable[i].connected_elements[j]!= NULL) {
-        //             free(node_hashtable[i].connected_elements[j]);
-        //         }
-        //     }
-        //     free(node_hashtable[i].connected_el_num);
-        //     free(node_hashtable[i].connected_elements);
-        // }
     }
 
     free(hsh_tbl.table);
@@ -171,24 +152,6 @@ void add_node(char* name)
 
 
     }
-    // if (node_hashtable[hash].depth_size == 0) {
-    // }
-    // else {
-        // char **temp;
-        // temp = (char**)realloc(node_hashtable[hash].name, (node_hashtable[hash].depth_size + 1) * sizeof(char*));
-        // node_hashtable[hash].name = temp;
-
-        // unsigned int *temp2;
-        // temp2 = (unsigned int*)realloc(node_hashtable[hash].index, (node_hashtable[hash].depth_size + 1) *sizeof(unsigned int));
-        // node_hashtable[hash].index = temp2;
-        // node_hashtable[hash].index[node_hashtable[hash].depth_size] = matrix_index;  
-        // matrix_index++;
-    // }
-    // node_hashtable[hash].connected_elements = (connected_element**)realloc( node_hashtable[hash].connected_elements,(node_hashtable[hash].depth_size + 1)*sizeof(connected_element*));
-    // node_hashtable[hash].connected_el_num = (int*)realloc(node_hashtable[hash].connected_el_num, (node_hashtable[hash].depth_size + 1)*sizeof(int));
-    // node_hashtable[hash].connected_el_num[node_hashtable[hash].depth_size] = 0;
-    // node_hashtable[hash].connected_el_num[node_hashtable[hash].depth_size] = 0;
-    // node_hashtable[hash].connected_elements[node_hashtable[hash].depth_size] = NULL; 
 }
 
 node_index find_node(char* name)
@@ -229,11 +192,7 @@ node_index find_node(char* name)
         prev = curr;
     }
 
-        
-
-
-
-
+    
 /******************************************************************** */
     // for (int i = 0; i < node_hashtable[hash].depth_size; i++) 
     // {
@@ -249,25 +208,6 @@ node_index find_node(char* name)
     return result; // hash and depth remains -1 if not found
 }
 
-// void add_connected_element(char *node_name,int pos, element_type type) {
-//     node_index node;
-
-//     node = find_node(node_name);
-    
-//     if (node.depth == -1) {
-//         fprintf(stderr, "node not added\n");
-//         exit(EXIT_FAILURE);
-//     }
-//     // connected_element *tmp;
-//     // tmp = (connected_element*)realloc(node_hashtable[node.hash].connected_elements[node.depth], (node_hashtable[node.hash].connected_el_num[node.depth] + 1) * sizeof(connected_element));
-//     // node_hashtable[node.hash].connected_elements[node.depth] = tmp;
-
-//     // node_hashtable[node.hash].connected_elements[node.depth][node_hashtable[node.hash].connected_el_num[node.depth]].index = pos;
-//     // node_hashtable[node.hash].connected_elements[node.depth][node_hashtable[node.hash].connected_el_num[node.depth]].type = type;
-
-//     // node_hashtable[node.hash].connected_el_num[node.depth]++;
-// }
-
 void print_hash_table () {
     printf("\n\n*********HASH TABLE*********\n");
 
@@ -277,45 +217,16 @@ void print_hash_table () {
         }
         printf("\nhash table index: %d, depth: X\n", i);
 
-
         node *curr;
         node *prev;
 
         prev = hsh_tbl.table[i];
-         while (prev != NULL) {
-        
-
-        curr = prev->nxt;
-        printf("%s\n", prev->name);
-        printf("index in matrix: %d\n", prev->index);
-        prev = curr;
-    }
-
-
-        // for (int n=0; n<node_hashtable[i].depth_size; n++) {
-        //     printf("NAME: %s\n", node_hashtable[i].name[n]);
-        //     printf("INDEX: %d\n", node_hashtable[i].index[n]);
-        //     // printf("CONNECTED ELEMENTS:\n");
-        //     // for (int l=0; l<node_hashtable[i].connected_el_num[n]; l++) {
-        //     //     switch (node_hashtable[i].connected_elements[n][l].type)
-        //     //     {
-        //     //     case SOURCE:
-        //     //         printf("SOURCE ");
-        //     //         break;
-        //     //     case LINEAR:
-        //     //         printf("LINEAR ELEMENT ");
-        //     //         break;
-        //     //     case NON_LINEAR:
-        //     //         printf("NON LINEAR ELEMENT ");
-        //     //         break;
-        //     //     default:
-        //     //         fprintf(stderr, "INVALID CONNECTED ELEMENT TYPE\n");
-        //     //         exit(EXIT_FAILURE);
-        //     //         break;
-        //     //     }
-        //     //     printf("at array index: %d\n", node_hashtable[i].connected_elements[n][l].index);
-        //     // }
-        // }
+        while (prev != NULL) {
+            curr = prev->nxt;
+            printf("%s\n", prev->name);
+            printf("index in matrix: %d\n", prev->index);
+            prev = curr;
+        }
     }
 }
 
@@ -323,9 +234,6 @@ void print_hash_table_v2() {
     printf("\n\n*********HASH TABLE*********\n");
     for(unsigned int i=0; i<hsh_tbl.size; i++) {
         printf("[%d]: ",i);
-
-
-
         node *curr;
         node *prev;
 
@@ -338,13 +246,6 @@ void print_hash_table_v2() {
         prev = curr;
     }
 
-
-
-
-
-        // for (int n=0; n<node_hashtable[i].depth_size; n++) {
-        //     printf("%s ",node_hashtable[i].name[n]);
-        // }
         printf("\n");
     }
 }
@@ -377,6 +278,7 @@ enum group get_element_group(element_type type, int pos) {
 
 void init_DC_matrix_and_vectors(int size) {
 
+    // allocate memory for G_tilda matrix and x, e vectors
     G_tilda = gsl_matrix_calloc(size, size);
     x = gsl_vector_calloc(size);
     e = gsl_vector_calloc(size);
@@ -406,19 +308,22 @@ unsigned int get_node_matrix_index(char* node_name) {
     node_index nd;
     node *n;
 
+    // find the node in the hashtable
     nd = find_node(node_name);
 
+    // linear search in case of collisions
     n = hsh_tbl.table[nd.hash];
     while (n != NULL) {
         if (strcmp(n->name, node_name) == 0) {
-            return n->index;
+            return n->index; // return the matrix index
         }
         n = n->nxt;
     }
     return 0; // should not reach here
 }
 
-void add_group_1_element(int pos, element_type type) {
+// adds G1 elements to the DC system
+void DC_add_group_1_element(int pos, element_type type) {
     unsigned int pos_node, neg_node;
     switch (type) {
         case SOURCE:
@@ -427,9 +332,11 @@ void add_group_1_element(int pos, element_type type) {
                 exit(EXIT_FAILURE);
             }
 
+            // get the indexes of the nodes in the matrix
             pos_node = get_node_matrix_index(SourcesArray[pos].pos_node);
             neg_node = get_node_matrix_index(SourcesArray[pos].neg_node);
 
+            // "stamp" the current source into the e vector
             if(pos_node == 0) {
                 gsl_vector_set(e, neg_node-1, gsl_vector_get(e, neg_node-1) + SourcesArray[pos].value);
             }
@@ -449,12 +356,14 @@ void add_group_1_element(int pos, element_type type) {
             }
 
             if (LinElArray[pos].type == C) {
-                break;
+                break; // in DC analysis, capacitors are open circuits so we skip them
             }
 
+            // get the indexes of the nodes in the matrix
             pos_node = get_node_matrix_index(LinElArray[pos].pos_node);
             neg_node = get_node_matrix_index(LinElArray[pos].neg_node);
             
+            // "stamp" the resistor into the G_tilda matrix
             if (pos_node == 0) {
                 gsl_matrix_set(G_tilda, neg_node-1, neg_node-1, gsl_matrix_get(G_tilda, neg_node-1, neg_node-1) + 1.0/LinElArray[pos].value);
             }
@@ -475,7 +384,8 @@ void add_group_1_element(int pos, element_type type) {
     }
 }
 
-void add_group_2_element(int pos, element_type type) {
+// adds G2 elements to the DC system
+void DC_add_group_2_element(int pos, element_type type) {
     unsigned int pos_node, neg_node;
 
     switch (type)
@@ -532,6 +442,7 @@ void add_group_2_element(int pos, element_type type) {
 void create_DC_system() {
     list_elementT *curr;
 
+    // initialize the index of the group 2 elements
     group_2_index = matrix_index - 1;
 
     curr = list.head;
@@ -539,10 +450,10 @@ void create_DC_system() {
 
         switch(get_element_group(curr->type, curr->pos)) {
             case GROUP_1:
-                add_group_1_element(curr->pos, curr->type);
+                DC_add_group_1_element(curr->pos, curr->type);
                 break;
             case GROUP_2:
-                add_group_2_element(curr->pos, curr->type);
+                DC_add_group_2_element(curr->pos, curr->type);
                 break;
             default:
                 fprintf(stderr, "INVALID GROUP TYPE\n");
@@ -555,18 +466,15 @@ void create_DC_system() {
 }
 
 void print_DC_system() {
-    printf("\n\n*********G_TILDA MATRIX*********\n");
+    printf("\n\n********* DC SYSTEM *********\n");
     for (size_t i = 0; i < G_tilda->size1; i++) {
+        printf("[");
         for (size_t j = 0; j < G_tilda->size2; j++) {
             printf("%10.4f ", gsl_matrix_get(G_tilda, i, j));
         }
-        printf("\n");
+        printf("] ");
+
+        printf("[x%zu]   [%.2f]\n", i + 1, gsl_vector_get(e, i));
     }
 
-    printf("\n\n*********EXCITATION VECTOR E*********\n");
-    for (size_t i = 0; i < e->size; i++) {
-        printf("%10.4f\n", gsl_vector_get(e, i));
-    }
 }
-
-
