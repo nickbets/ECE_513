@@ -6,6 +6,8 @@
 #include <gsl/gsl_blas.h> 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_linalg.h>
+
 
 typedef enum 
 {
@@ -88,6 +90,13 @@ struct NonLinearElement {
 };
 typedef struct NonLinearElement NonLinearElementT;
 
+struct G2_element
+{
+    char* name;
+    unsigned int matrix_index;
+};
+typedef struct G2_element G2_elementT;
+
 // extern unsigned int node_hashtable_size; // size of the node hashtable
 // extern node* node_hashtable; // hashtable of nodes
 extern hash_table hsh_tbl;
@@ -103,6 +112,17 @@ extern gsl_matrix *G_tilda; // matrix G_tilda
 extern gsl_vector *x; // solution vector x, Voltages and Currents
 extern gsl_vector *e; // excitation vector e
 extern unsigned int group_2_index;
+extern gsl_permutation *p;
+extern int signum;
+extern char** commands;
+extern int commands_size;
+extern int cholesky_flag;
+extern int custom_flag;
+extern G2_elementT *group2;
+extern gsl_vector **dc_sweep_solutions;
+extern int dc_sweep_size;
+extern char *last_dc;
+
 
 unsigned int hash_function(const char *key, unsigned int table_size);
 void init_node_hashtable(unsigned int size);
@@ -110,15 +130,12 @@ void free_node_hashtable();
 void add_node(char* name);
 node_index find_node(char* name);
 void add_connected_element(char* node_name,int pos, element_type type);
-void print_hash_table () ;
+void print_hash_table() ;
 void print_hash_table_v2() ;
 enum group get_element_group(element_type type, int pos);
 void create_DC_system();
-void init_DC_matrix_and_vectors(int size);
-void free_DC_matrix_and_vectors();
-unsigned int get_node_matrix_index(char* node_name);
-void DC_add_group_1_element(int pos, element_type type);
-void DC_add_group_2_element(int pos, element_type type);
-void print_DC_system();
+void init_commands();
+void free_commands();
+
 
 #endif

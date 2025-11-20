@@ -15,8 +15,20 @@ int group_1_size = 0;
 int group_2_size = 0;
 
 gsl_matrix *G_tilda = NULL; // matrix G_tilda
-gsl_vector *x = NULL; // solution vector x, Voltages and Currents
 gsl_vector *e = NULL; // excitation vector e
+
+char** commands = NULL;
+int commands_size = 0;
+
+int cholesky_flag = 0;
+int custom_flag = 0;
+
+G2_elementT *group2 = NULL;
+
+gsl_vector **dc_sweep_solutions = NULL;
+int dc_sweep_size = 0;
+
+char *last_dc = NULL;
 
 unsigned int hash_function(const char *key, unsigned int table_size) {
     unsigned int hash = 0;
@@ -274,4 +286,18 @@ enum group get_element_group(element_type type, int pos) {
             break;
     }
     return -1;
+}
+
+void init_commands() {
+    commands_size = 0;
+    commands = NULL;
+}
+
+void free_commands() {
+    for (int i=0; i<commands_size; i++) {
+        free(commands[i]);
+    }
+    free(commands);
+    commands = NULL;
+    commands_size = 0;
 }

@@ -5,7 +5,6 @@
 #include "parser.h"
 
 
-
 int read_file(char *filename) {
     FILE *file;
     char line[MAX_LINE_SIZE];
@@ -63,8 +62,19 @@ int read_file(char *filename) {
                     // printf("it is a comment\n");
                     break;
                 case '.':
-                    printf("it is an command\n");
-                break;
+                    commands = (char**) realloc(commands, (commands_size + 1) * sizeof(char*));
+                    commands[commands_size] = strdup(line);
+                    commands_size++;
+
+                    if (strcmp(words[0], ".OPTIONS") == 0) {
+                        if(strcmp(words[1], "SPD") == 0) {
+                            cholesky_flag = 1;
+                        }
+                        else if (strcmp(words[1], "CUSTOM") == 0) {
+                            custom_flag = 1;
+                        }
+                    }
+                    break;
                 default:
                     printf("random line\n");
                     break;
@@ -378,7 +388,7 @@ int read_file(char *filename) {
                     // printf("it is a comment\n");
                     break;
                 case '.':
-                    // printf("it is an command\n");
+                    
                 break;
                 default:
                     printf("Error, invalid line\n");
@@ -597,14 +607,15 @@ char **split_line(char* line, int  *size) {
         }
     }
     
-
-    token = strtok(line, delimiters);
+    char* copy = strdup(line);
+    token = strtok(copy, delimiters);
     for (int i=0; i<(*size); i++) {
         words[i] = strdup(token);
         token = strtok(NULL, delimiters);
     }
 
     free(temp_line);
+    free(copy);
     return(words);
 }
 
