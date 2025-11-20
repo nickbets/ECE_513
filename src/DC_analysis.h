@@ -12,7 +12,7 @@ void print_DC_system();
 void lu_decomposition(gsl_matrix *A, gsl_permutation *p, int *signum);
 int cholesky_decomp_custom(gsl_matrix *A);
 void forward_substitution(gsl_matrix *L, gsl_vector *b, gsl_vector *y);
-void back_substitution(gsl_matrix *L, gsl_permutation *p, gsl_vector *y, gsl_vector *x);
+void backward_substitution(gsl_matrix *L, gsl_permutation *p, gsl_vector *y, gsl_vector *x);
 void solve_lu_system(gsl_matrix *A, gsl_permutation *p, gsl_vector *b, gsl_vector *x);
 void solve_cholesky_system(gsl_matrix *L, gsl_vector *b, gsl_vector *x);
 void operating_point_DC_analysis();
