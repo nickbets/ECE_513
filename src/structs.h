@@ -118,10 +118,12 @@ extern char** commands;
 extern int commands_size;
 extern int cholesky_flag;
 extern int custom_flag;
+extern int iterative_flag;
 extern G2_elementT *group2;
 extern gsl_vector **dc_sweep_solutions;
 extern int dc_sweep_size;
 extern char *last_dc;
+extern double tolerance;
 
 
 unsigned int hash_function(const char *key, unsigned int table_size);

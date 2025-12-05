@@ -3,7 +3,7 @@
 CC       ?= gcc
 TARGET   ?= app
 
-SRC      := main.c structs.c parser.c DC_analysis.c 
+SRC      := main.c structs.c parser.c DC_analysis.c iterative.c
 OBJ      := $(SRC:.c=.o)
 DEPS     := $(OBJ:.o=.d)
 

@@ -5,6 +5,7 @@
 #include "parser.h"
 
 
+
 int read_file(char *filename) {
     FILE *file;
     char line[MAX_LINE_SIZE];
@@ -70,9 +71,15 @@ int read_file(char *filename) {
                         if(strcmp(words[1], "SPD") == 0) {
                             cholesky_flag = 1;
                         }
-                        else if (strcmp(words[1], "CUSTOM") == 0) {
+                        if (strcmp(words[1], "CUSTOM") == 0) {
                             custom_flag = 1;
                         }
+                        if (strcmp(words[1], "ITER") == 0)
+                        {
+                            iterative_flag = 1;
+                        }
+                        
+                        
                     }
                     break;
                 default:

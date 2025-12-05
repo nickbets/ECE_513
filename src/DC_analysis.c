@@ -50,6 +50,9 @@ unsigned int get_node_matrix_index(char* node_name) {
 // adds G1 elements to the DC system
 void DC_add_group_1_element(int pos, element_type type) {
     unsigned int pos_node, neg_node;
+    
+        // printf("--------ADDING: gr1 element\n");
+
     switch (type) {
         case SOURCE:
             if (SourcesArray[pos].type != I) {
@@ -113,6 +116,7 @@ void DC_add_group_1_element(int pos, element_type type) {
 void DC_add_group_2_element(int pos, element_type type) {
     unsigned int pos_node, neg_node;
 
+    // printf("--------ADDING: gr2inx:%d, mtrx indx:%d\n", group_2_index, matrix_index);
     switch (type)
     {
     case SOURCE:
@@ -135,12 +139,12 @@ void DC_add_group_2_element(int pos, element_type type) {
 
         // update e vector
         gsl_vector_set(e, group_2_index, SourcesArray[pos].value);
-        
+        // printf("JUST ADDED G2 ON [%d]\n", group_2_index);
         group_2_index++;
         
         group2 = realloc(group2, (group_2_index - matrix_index + 1)*sizeof(G2_elementT));
         group2[group_2_index - matrix_index].name = strdup(SourcesArray[pos].name);
-        group2[group_2_index - matrix_index].matrix_index = group_2_index;
+        group2[group_2_index - matrix_index].matrix_index = group_2_index-1;
         break;
     
     case LINEAR:
@@ -170,13 +174,17 @@ void DC_add_group_2_element(int pos, element_type type) {
     default:
         break;
     }
+    // group_2_index++;
+    // printf("-*-*-*-*-*-*-*-*-*-**--*-*-*-group2 index is %d, matrix index:%d\n", group_2_index, matrix_index);
+
 }
 
 void create_DC_system() {
     list_elementT *curr;
 
     // initialize the index of the group 2 elements
-    group_2_index = matrix_index - 1;
+    group_2_index = matrix_index-1;
+    // printf("MATRIX INDEX IS: %d\n", matrix_index);
 
     group2 = NULL;
     curr = list.head;
@@ -196,10 +204,23 @@ void create_DC_system() {
 
         curr = curr->nxt;
     }
+
+    // printf("22222222222222_CREATE_DC_SYSTEM:\n G_tilda[%ld][%ld]\n", G_tilda->size1, G_tilda->size2);
+    // gsl_matrix_set(G_tilda,10,10, gsl_matrix_get(G_tilda,10,10));
+    // printf("matrix_index:%d\n",matrix_index);
+    // printf("group2_index now:%d\n", group_2_index);
+    // printf("group2 size:%d\n", group_2_size);
+
+    // printf("22222222222222\n");
+
+    // print_DC_system();
+
 }
 
 void print_DC_system() {
     printf("\n\n********* DC SYSTEM *********\n");
+    // gsl_matrix_set(G_tilda,10,10, gsl_matrix_get(G_tilda,10,10));
+
     for (size_t i = 0; i < G_tilda->size1; i++) {
         printf("[");
         for (size_t j = 0; j < G_tilda->size2; j++) {
@@ -433,28 +454,42 @@ void operating_point_DC_analysis() {
 
     gsl_matrix_memcpy(A, G_tilda);
     gsl_vector_memcpy(b, e);
-    if (cholesky_flag == 1) {
-        if (custom_flag == 1) {
-            cholesky_decomp_custom(A);
-            solve_cholesky_system(A, b, x);
+    if(iterative_flag == 1) {
+
+        if(cholesky_flag ==1) {
+            solve_CG(A, b, x, tolerance);
+            printf("Solved DC system using Conjugate Gradient method\n");
         }
-        else {
-            gsl_linalg_cholesky_decomp(A);
-            gsl_linalg_cholesky_solve(A, b, x);
+        else{
+            solve_BiCG(A, b, x, tolerance);
+            printf("Solved DC system using Bi-CG method\n");
         }
     }
     else {
-        gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
-        int signum;
-        if(custom_flag == 1) {
-            lu_decomposition(A, p, &signum);
-            solve_lu_system(A, p, b, x);
+
+        if (cholesky_flag == 1) {
+            if (custom_flag == 1) {
+                cholesky_decomp_custom(A);
+                solve_cholesky_system(A, b, x);
+            }
+            else {
+                gsl_linalg_cholesky_decomp(A);
+                gsl_linalg_cholesky_solve(A, b, x);
+            }
         }
         else {
-            gsl_linalg_LU_decomp(A, p, &signum);
-            gsl_linalg_LU_solve(A, p, e, x);
+            gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
+            int signum;
+            if(custom_flag == 1) {
+                lu_decomposition(A, p, &signum);
+                solve_lu_system(A, p, b, x);
+            }
+            else {
+                gsl_linalg_LU_decomp(A, p, &signum);
+                gsl_linalg_LU_solve(A, p, e, x);
+            }
+            gsl_permutation_free(p);
         }
-        gsl_permutation_free(p);
     }
  
     printf("Saving operating point DC analysis results to ../output/dc_op.txt\n");
@@ -472,6 +507,8 @@ void print_operating_point_DC_analysis(gsl_vector *x) {
     FILE *fp = NULL;
     char filename[] = "../output/dc_op.txt";
     node *curr = NULL;
+    int k;
+
     
     fp = fopen(filename, "w");
 
@@ -484,10 +521,16 @@ void print_operating_point_DC_analysis(gsl_vector *x) {
             curr = curr->nxt;
         }
     }
-
-    for (i = 0; i < (unsigned int) group_2_size - 1; i++) {
-        fprintf(fp, "%s I(%g)\n", group2[i].name, gsl_vector_get(x, group2[i].matrix_index));
+///////////////////////////BUG1, BUG2
+    printf("------------------------------group2 size is %d\n", group_2_size);
+    // group_2_size = 3;
+    for (k = 0; k < ( group_2_size); k++) {
+        // printf("\n*************\n");
+        // group2[k].name = group2[k].name;
+        fprintf(fp, "%s I(%g)\n", group2[k].name, gsl_vector_get(x, group2[k].matrix_index));
     }
+    // printf("k is %u, group2 size is %d\n", i, group_2_size);
+
    
     fclose(fp);
     fp = NULL;
@@ -548,28 +591,40 @@ void DC_sweep(char* source_name, double start, double stop, double step) {
         gsl_matrix_memcpy(A, G_tilda);
         gsl_vector_memcpy(b, e);
 
-        if (cholesky_flag == 1) {
-            if (custom_flag == 1) {
-                cholesky_decomp_custom(A);
-                solve_cholesky_system(A, b, dc_sweep_solutions[k-1]);
+        if (iterative_flag == 1) {
+
+            if(cholesky_flag ==1) {
+                solve_CG(A, b, dc_sweep_solutions[k-1], tolerance);
             }
-            else {
-                gsl_linalg_cholesky_decomp(A);
-                gsl_linalg_cholesky_solve(A, b, dc_sweep_solutions[k-1]);
+            else{
+                solve_BiCG(A, b, dc_sweep_solutions[k-1], tolerance);
             }
         }
         else {
-            gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
-            int signum;
-            if(custom_flag == 1) {
-                lu_decomposition(A, p, &signum);
-                solve_lu_system(A, p, b, dc_sweep_solutions[k-1]);
+
+            if (cholesky_flag == 1) {
+                if (custom_flag == 1) {
+                    cholesky_decomp_custom(A);
+                    solve_cholesky_system(A, b, dc_sweep_solutions[k-1]);
+                }
+                else {
+                    gsl_linalg_cholesky_decomp(A);
+                    gsl_linalg_cholesky_solve(A, b, dc_sweep_solutions[k-1]);
+                }
             }
             else {
-                gsl_linalg_LU_decomp(A, p, &signum);
-                gsl_linalg_LU_solve(A, p, e, dc_sweep_solutions[k-1]);
+                gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
+                int signum;
+                if(custom_flag == 1) {
+                    lu_decomposition(A, p, &signum);
+                    solve_lu_system(A, p, b, dc_sweep_solutions[k-1]);
+                }
+                else {
+                    gsl_linalg_LU_decomp(A, p, &signum);
+                    gsl_linalg_LU_solve(A, p, e, dc_sweep_solutions[k-1]);
+                }
+                gsl_permutation_free(p);
             }
-            gsl_permutation_free(p);
         }
 
         gsl_matrix_free(A);

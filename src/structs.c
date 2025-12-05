@@ -22,6 +22,7 @@ int commands_size = 0;
 
 int cholesky_flag = 0;
 int custom_flag = 0;
+int iterative_flag = 0;
 
 G2_elementT *group2 = NULL;
 
@@ -29,6 +30,8 @@ gsl_vector **dc_sweep_solutions = NULL;
 int dc_sweep_size = 0;
 
 char *last_dc = NULL;
+
+double tolerance = 1e-3;
 
 unsigned int hash_function(const char *key, unsigned int table_size) {
     unsigned int hash = 0;
