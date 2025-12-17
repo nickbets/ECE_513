@@ -10,12 +10,14 @@ def parse_file(filename, type=None):
     with open(filename, 'r') as f:
         for line in f:
             line = line.strip()
+            print("line = ", line)
             if not line:
                 continue
 
             if type == "op":
                 # ngspice
-                m = re.match(r'([vViIlL]\(?[^\s=)]+\)?(?:#branch)?)\s*=\s*([-+0-9.eE]+)', line)
+                m = re.match(r'(\(?[^\s=)]+\)?(?:#branch)?)\s*=\s*([-+0-9.eE]+)', line)
+                print('m = ', m)   
                 if m:
                     name, val = m.groups()
                     name = name.lower().replace("#branch", "")

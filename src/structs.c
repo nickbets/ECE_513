@@ -16,6 +16,8 @@ int group_2_size = 0;
 
 gsl_matrix *G_tilda = NULL; // matrix G_tilda
 gsl_vector *e = NULL; // excitation vector e
+cs *G_tilda_sparse = NULL; // sparse matrix G_tilda
+double *e_sparse = NULL; // sparse excitation vector e
 
 char** commands = NULL;
 int commands_size = 0;
@@ -23,6 +25,7 @@ int commands_size = 0;
 int cholesky_flag = 0;
 int custom_flag = 0;
 int iterative_flag = 0;
+int sparse_flag = 0;
 
 G2_elementT *group2 = NULL;
 

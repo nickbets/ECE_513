@@ -68,18 +68,29 @@ int read_file(char *filename) {
                     commands_size++;
 
                     if (strcmp(words[0], ".OPTIONS") == 0) {
-                        if(strcmp(words[1], "SPD") == 0) {
-                            cholesky_flag = 1;
-                        }
-                        if (strcmp(words[1], "CUSTOM") == 0) {
-                            custom_flag = 1;
-                        }
-                        if (strcmp(words[1], "ITER") == 0)
-                        {
-                            iterative_flag = 1;
-                        }
                         
-                        
+                        for (int i = 1; i < size; i++) {
+
+                            if(strcmp(words[i], "SPD") == 0) {
+                                cholesky_flag = 1;
+                            }
+                            if (strcmp(words[i], "CUSTOM") == 0) {
+                                custom_flag = 1;
+                            }
+                            if (strcmp(words[i], "ITER") == 0)
+                            {
+                                iterative_flag = 1;
+                            }
+                            if (strcmp(words[i], "SPARSE") == 0)
+                            {
+                                sparse_flag = 1;
+                            }
+                            
+                        }
+                    }
+                    if (strncmp(words[0],".ITOL", 5) == 0) {
+                        tolerance = strtod(&words[0][6], NULL);
+                        printf("Set iterative solver tolerance to %g\n", tolerance);
                     }
                     break;
                 default:

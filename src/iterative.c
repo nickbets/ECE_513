@@ -101,6 +101,7 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
 {
     size_t n = A->size1;
     int max_iter = n;
+    int k;
 
     gsl_vector *r = gsl_vector_calloc(n);
     gsl_vector *rt = gsl_vector_calloc(n);
@@ -127,7 +128,7 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
     double bnorm = gsl_blas_dnrm2(b);
     if (bnorm == 0) bnorm = 1;
 
-    for (int k = 0; k < max_iter; k++) {
+    for (k = 0; k < max_iter; k++) {
 
         Ax(A, p, Ap);
 
@@ -181,6 +182,8 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
 
         rr = rr_new;
     }
+
+    printf("BiCG finished in %d iterations\n", k);
 
     gsl_vector_free(r);
     gsl_vector_free(rt);

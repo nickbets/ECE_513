@@ -1,6 +1,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include "DC_analysis.h"
+# include "csparse.h"
 
 void init_DC_matrix_and_vectors(int size) {
 
@@ -93,16 +94,41 @@ void DC_add_group_1_element(int pos, element_type type) {
             
             // "stamp" the resistor into the G_tilda matrix
             if (pos_node == 0) {
-                gsl_matrix_set(G_tilda, neg_node-1, neg_node-1, gsl_matrix_get(G_tilda, neg_node-1, neg_node-1) + 1.0/LinElArray[pos].value);
+                if (sparse_flag == 1)
+                {
+                    cs_entry(G_tilda_sparse, neg_node-1, neg_node-1, 1.0/LinElArray[pos].value);
+                }
+                else
+                {
+                    gsl_matrix_set(G_tilda, neg_node-1, neg_node-1, gsl_matrix_get(G_tilda, neg_node-1, neg_node-1) + 1.0/LinElArray[pos].value);
+                }
             }
             else if (neg_node == 0) {
-                gsl_matrix_set(G_tilda, pos_node-1, pos_node-1, gsl_matrix_get(G_tilda, pos_node-1, pos_node-1) + 1.0/LinElArray[pos].value);
+                if (sparse_flag == 1)
+                {
+                    cs_entry(G_tilda_sparse, pos_node-1, pos_node-1, 1.0/LinElArray[pos].value);
+                }
+                else
+                {
+                    gsl_matrix_set(G_tilda, pos_node-1, pos_node-1, gsl_matrix_get(G_tilda, pos_node-1, pos_node-1) + 1.0/LinElArray[pos].value);
+                }
             }
             else {
-                gsl_matrix_set(G_tilda, pos_node-1, pos_node-1, gsl_matrix_get(G_tilda, pos_node-1, pos_node-1) + 1.0/LinElArray[pos].value);
-                gsl_matrix_set(G_tilda, neg_node-1, neg_node-1, gsl_matrix_get(G_tilda, neg_node-1, neg_node-1) + 1.0/LinElArray[pos].value);
-                gsl_matrix_set(G_tilda, pos_node-1, neg_node-1, gsl_matrix_get(G_tilda, pos_node-1, neg_node-1) - 1.0/LinElArray[pos].value);
-                gsl_matrix_set(G_tilda, neg_node-1, pos_node-1, gsl_matrix_get(G_tilda, neg_node-1, pos_node-1) - 1.0/LinElArray[pos].value);
+                if (sparse_flag == 1)
+                {
+                    cs_entry(G_tilda_sparse, pos_node-1, pos_node-1, 1.0/LinElArray[pos].value);
+                    cs_entry(G_tilda_sparse, neg_node-1, neg_node-1, 1.0/LinElArray[pos].value);
+                    cs_entry(G_tilda_sparse, pos_node-1, neg_node-1, -1.0/LinElArray[pos].value);
+                    cs_entry(G_tilda_sparse, neg_node-1, pos_node-1, -1.0/LinElArray[pos].value);
+                }
+                else
+                {
+                    gsl_matrix_set(G_tilda, pos_node-1, pos_node-1, gsl_matrix_get(G_tilda, pos_node-1, pos_node-1) + 1.0/LinElArray[pos].value);
+                    gsl_matrix_set(G_tilda, neg_node-1, neg_node-1, gsl_matrix_get(G_tilda, neg_node-1, neg_node-1) + 1.0/LinElArray[pos].value);
+                    gsl_matrix_set(G_tilda, pos_node-1, neg_node-1, gsl_matrix_get(G_tilda, pos_node-1, neg_node-1) - 1.0/LinElArray[pos].value);
+                    gsl_matrix_set(G_tilda, neg_node-1, pos_node-1, gsl_matrix_get(G_tilda, neg_node-1, pos_node-1) - 1.0/LinElArray[pos].value);
+                }
+               
             }
             break;
         default:
@@ -129,12 +155,29 @@ void DC_add_group_2_element(int pos, element_type type) {
         
         // update G_tilda matrix
         if(pos_node != 0) {
-            gsl_matrix_set(G_tilda, pos_node-1, group_2_index, gsl_matrix_get(G_tilda, pos_node-1, group_2_index) + 1);
-            gsl_matrix_set(G_tilda, group_2_index, pos_node-1, gsl_matrix_get(G_tilda, group_2_index, pos_node-1) + 1);
+            if(sparse_flag == 1)
+            {
+                cs_entry(G_tilda_sparse, pos_node-1, group_2_index, 1);
+                cs_entry(G_tilda_sparse, group_2_index, pos_node-1, 1);
+            }
+            else
+            {
+                gsl_matrix_set(G_tilda, pos_node-1, group_2_index, gsl_matrix_get(G_tilda, pos_node-1, group_2_index) + 1);
+                gsl_matrix_set(G_tilda, group_2_index, pos_node-1, gsl_matrix_get(G_tilda, group_2_index, pos_node-1) + 1);
+            }
         }
         if(neg_node != 0) {
-            gsl_matrix_set(G_tilda, neg_node-1, group_2_index, gsl_matrix_get(G_tilda, neg_node-1, group_2_index) - 1);
-            gsl_matrix_set(G_tilda, group_2_index, neg_node-1, gsl_matrix_get(G_tilda, group_2_index, neg_node-1) - 1);
+            if (sparse_flag == 1)
+            {
+                cs_entry(G_tilda_sparse, neg_node-1, group_2_index, -1);
+                cs_entry(G_tilda_sparse, group_2_index, neg_node-1, -1);
+            }
+            else
+            {
+                gsl_matrix_set(G_tilda, neg_node-1, group_2_index, gsl_matrix_get(G_tilda, neg_node-1, group_2_index) - 1);
+                gsl_matrix_set(G_tilda, group_2_index, neg_node-1, gsl_matrix_get(G_tilda, group_2_index, neg_node-1) - 1);
+            }
+
         }
 
         // update e vector
@@ -157,12 +200,30 @@ void DC_add_group_2_element(int pos, element_type type) {
 
         // update G_tilda matrix
         if(pos_node != 0) {
-            gsl_matrix_set(G_tilda, pos_node-1, group_2_index, gsl_matrix_get(G_tilda, pos_node-1, group_2_index) + 1); 
-            gsl_matrix_set(G_tilda, group_2_index, pos_node-1, gsl_matrix_get(G_tilda, group_2_index, pos_node-1) + 1);
+            if (sparse_flag == 1)
+            {
+                cs_entry(G_tilda_sparse, pos_node-1, group_2_index, 1);
+                cs_entry(G_tilda_sparse, group_2_index, pos_node-1, 1);
+            }
+            else
+            {
+                gsl_matrix_set(G_tilda, pos_node-1, group_2_index, gsl_matrix_get(G_tilda, pos_node-1, group_2_index) + 1); 
+                gsl_matrix_set(G_tilda, group_2_index, pos_node-1, gsl_matrix_get(G_tilda, group_2_index, pos_node-1) + 1);
+            }
+           
         }
         if(neg_node != 0) {
-            gsl_matrix_set(G_tilda, neg_node-1, group_2_index, gsl_matrix_get(G_tilda, neg_node-1, group_2_index) - 1);
-            gsl_matrix_set(G_tilda, group_2_index, neg_node-1, gsl_matrix_get(G_tilda, group_2_index, neg_node-1) - 1);
+            if (sparse_flag == 1)
+            {
+                cs_entry(G_tilda_sparse, neg_node-1, group_2_index, -1);
+                cs_entry(G_tilda_sparse, group_2_index, neg_node-1, -1);
+            }
+            else
+            {
+                gsl_matrix_set(G_tilda, neg_node-1, group_2_index, gsl_matrix_get(G_tilda, neg_node-1, group_2_index) - 1);
+                gsl_matrix_set(G_tilda, group_2_index, neg_node-1, gsl_matrix_get(G_tilda, group_2_index, neg_node-1) - 1);
+            }
+            
         }
         
         group_2_index++;
@@ -355,6 +416,7 @@ int cholesky_decomp_custom(gsl_matrix *A) {
         double akk = gsl_matrix_get(A, k, k);
         double lkk = akk - sum;
         
+        printf("lkk: %g = %g - %g\n", lkk, akk, sum);
         if (lkk < 0) {
             printf("Matrix not positive definite at (%ld,%ld)\n", k, k);
             exit(EXIT_FAILURE);
@@ -407,7 +469,6 @@ void backward_substitution(gsl_matrix *U, gsl_vector *y, gsl_vector *x) {
     }
 }
 
-
 void solve_lu_system(gsl_matrix *A, gsl_permutation *p, gsl_vector *b, gsl_vector *x) {
     size_t n = A->size1;
     gsl_vector *y = gsl_vector_alloc(n);
@@ -415,7 +476,9 @@ void solve_lu_system(gsl_matrix *A, gsl_permutation *p, gsl_vector *b, gsl_vecto
 
     // Apply permutation to b
     for (size_t i = 0; i < n; i++) {
-        gsl_vector_set(b_permuted, i, gsl_vector_get(b, gsl_permutation_get(p, i)));
+        size_t index = gsl_permutation_get(p, i);
+        double val = gsl_vector_get(b, index);
+        gsl_vector_set(b_permuted, i, val);
     }
 
     // Forward substitution to solve Ly = Pb
@@ -445,8 +508,12 @@ void operating_point_DC_analysis() {
     gsl_matrix *A = NULL;
     gsl_vector *b = NULL;
     gsl_vector *x = NULL;
+    gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
+    gsl_permutation_init(p);
 
     create_DC_system();
+
+    print_DC_system();
 
     A = gsl_matrix_alloc(G_tilda->size1, G_tilda->size1);
     b = gsl_vector_alloc(e->size);
@@ -471,22 +538,25 @@ void operating_point_DC_analysis() {
             if (custom_flag == 1) {
                 cholesky_decomp_custom(A);
                 solve_cholesky_system(A, b, x);
+                printf("Solved DC system using Custom Cholesky method\n");
             }
             else {
                 gsl_linalg_cholesky_decomp(A);
                 gsl_linalg_cholesky_solve(A, b, x);
+                printf("Solved DC system using GSL Cholesky method\n");
             }
         }
         else {
-            gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
             int signum;
             if(custom_flag == 1) {
                 lu_decomposition(A, p, &signum);
                 solve_lu_system(A, p, b, x);
+                printf("Solved DC system using Custom LU method\n");
             }
             else {
                 gsl_linalg_LU_decomp(A, p, &signum);
                 gsl_linalg_LU_solve(A, p, e, x);
+                printf("Solved DC system using GSL LU method\n");
             }
             gsl_permutation_free(p);
         }
@@ -516,7 +586,7 @@ void print_operating_point_DC_analysis(gsl_vector *x) {
         curr = hsh_tbl.table[i];
         while(curr != NULL) {
             if (curr->index != 0) {
-                fprintf(fp, "%s V(%g)\n", curr->name, gsl_vector_get(x, curr->index - 1));
+                fprintf(fp, "V(%s) = %g\n", curr->name, gsl_vector_get(x, curr->index - 1));
             }
             curr = curr->nxt;
         }
@@ -527,7 +597,7 @@ void print_operating_point_DC_analysis(gsl_vector *x) {
     for (k = 0; k < ( group_2_size); k++) {
         // printf("\n*************\n");
         // group2[k].name = group2[k].name;
-        fprintf(fp, "%s I(%g)\n", group2[k].name, gsl_vector_get(x, group2[k].matrix_index));
+        fprintf(fp, "v%s#branch = %g\n", group2[k].name, gsl_vector_get(x, group2[k].matrix_index));
     }
     // printf("k is %u, group2 size is %d\n", i, group_2_size);
 
@@ -580,7 +650,6 @@ void DC_sweep(char* source_name, double start, double stop, double step) {
         }
         
         init_DC_matrix_and_vectors(matrix_index - 1 + group_2_size);
-
 
         create_DC_system();
         

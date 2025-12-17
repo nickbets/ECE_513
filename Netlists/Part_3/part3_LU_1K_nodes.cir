@@ -2080,16 +2080,19 @@ I27 N781 0 0.0009
 I28 N811 0 0.0001
 I29 N841 0 0.0009
 I30 N871 0 0.0002
-.DC V1 -5 5 0.1
-.PLOT V(N11)
-.DC V2 0 10 0.5
-.PLOT V(N11)
+*.OPTIONS ITER
+*.ITOL=1e-6
+**.DC V1 -5 5 0.1
+**.PLOT V(N11)
+*.DC V2 0 10 0.5
+*.PLOT V(N11)
 
-*.control
-*  op
-*  print all > dc_op_ngspice.txt
-*  dc v1 -5 5 0.1
-*  wrdata dc_sweep_v1_v(n11)_ngspice.txt v(n11)
-*  dc v2 0 10 0.5
-*  wrdata dc_sweep_v2_v(n11)_ngspice.txt v(n11)
-*.endc
+.control
+  op
+  print all > dc_op_ngspice.txt
+  dc v1 -5 5 0.1
+  wrdata dc_sweep_v1_v(n11)_ngspice.txt v(n11)
+  dc v2 0 10 0.5
+  wrdata dc_sweep_v2_v(n11)_ngspice.txt v(n11)
+.endc
+*

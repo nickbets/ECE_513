@@ -7,6 +7,7 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_linalg.h>
+#include "csparse.h"
 
 
 typedef enum 
@@ -119,11 +120,16 @@ extern int commands_size;
 extern int cholesky_flag;
 extern int custom_flag;
 extern int iterative_flag;
+extern int sparse_flag;
 extern G2_elementT *group2;
 extern gsl_vector **dc_sweep_solutions;
 extern int dc_sweep_size;
 extern char *last_dc;
 extern double tolerance;
+
+extern int nonzeros;
+extern cs *G_tilda_sparse;
+extern double *e_sparse;
 
 
 unsigned int hash_function(const char *key, unsigned int table_size);

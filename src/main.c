@@ -37,7 +37,8 @@ int main (int argc, char *argv[]) {
     printf("Finished reading file\n");
 
     init_DC_matrix_and_vectors(matrix_index - 1 + group_2_size);
-        
+
+            
     printf("Performing DC Analysis at operating point...\n");
 
     operating_point_DC_analysis();
