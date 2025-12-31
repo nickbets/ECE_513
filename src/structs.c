@@ -18,6 +18,7 @@ gsl_matrix *G_tilda = NULL; // matrix G_tilda
 gsl_vector *e = NULL; // excitation vector e
 cs *G_tilda_sparse = NULL; // sparse matrix G_tilda
 double *e_sparse = NULL; // sparse excitation vector e
+cs *A_csc = NULL;
 
 char** commands = NULL;
 int commands_size = 0;

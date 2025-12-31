@@ -130,6 +130,8 @@ extern double tolerance;
 extern int nonzeros;
 extern cs *G_tilda_sparse;
 extern double *e_sparse;
+extern cs *A_csc;
+
 
 
 unsigned int hash_function(const char *key, unsigned int table_size);

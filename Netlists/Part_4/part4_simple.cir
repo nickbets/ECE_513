@@ -16,14 +16,8 @@ R8 4 0 10
 
 .OPTIONS ITER 
 .ITOL=1e-6
+
+*.OPTIONS CUSTOM
 *.DC V1 0 3 0.01
 
 *.PLOT V(4)
-
-*.control
-*  op
-*  print all > dc_op_ngspice.txt
-*  dc v1 0 3 0.01
-*  wrdata dc_sweep_v1_v(4)_ngspice.txt v(4)
-*.endc
-*

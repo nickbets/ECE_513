@@ -19,3 +19,6 @@ void operating_point_DC_analysis();
 void print_operating_point_DC_analysis(gsl_vector *x);
 void DC_sweep(char* source_name, double start, double stop, double step);
 void print_DC_sweep_results(char* input_variable, char* node_name, double start, double stop, double step);
+void print_sparse(cs *A);
+void print_operating_point_DC_analysis_sparse(const double *x, int n);
+void print_operating_point_DC_analysis_dense(const gsl_vector *x);

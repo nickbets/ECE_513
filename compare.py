@@ -1,5 +1,8 @@
 # Example usage:
-# python3 compare_results.py custom_op.txt ngspice_op.txt
+# For DC operating point (OP)
+# python3 compare_results.py <custom_op.txt> <ngspice_op.txt> op
+# For DC sweep / transient / AC
+# python3 compare_results.py <custom_op.txt> <ngspice_op.txt>
 
 import re
 import math
@@ -10,14 +13,12 @@ def parse_file(filename, type=None):
     with open(filename, 'r') as f:
         for line in f:
             line = line.strip()
-            print("line = ", line)
             if not line:
                 continue
 
             if type == "op":
                 # ngspice
-                m = re.match(r'(\(?[^\s=)]+\)?(?:#branch)?)\s*=\s*([-+0-9.eE]+)', line)
-                print('m = ', m)   
+                m = re.match(r'([vViIlL]?\(?[^\s=)]+\)?(?:#branch)?)\s*=\s*([-+0-9.eE]+)', line)
                 if m:
                     name, val = m.groups()
                     name = name.lower().replace("#branch", "")

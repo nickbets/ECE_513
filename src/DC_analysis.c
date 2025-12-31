@@ -2,31 +2,59 @@
 # include <stdlib.h>
 # include "DC_analysis.h"
 # include "csparse.h"
+#include "iterative.h"
 
 void init_DC_matrix_and_vectors(int size) {
 
     // allocate memory for G_tilda matrix and x, e vectors
-    G_tilda = gsl_matrix_calloc(size, size);
-    e = gsl_vector_calloc(size);
+    if (sparse_flag == 0) {
+        G_tilda = gsl_matrix_calloc(size, size);
+        e = gsl_vector_calloc(size);
+        G_tilda_sparse = NULL;
+        e_sparse = NULL;
+    }
+    else {
+        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        // G_tilda = NULL;
+        // e = NULL;
+        int nzmax = 10*size;
+        G_tilda_sparse = cs_spalloc(size, size, nzmax, 1,1);
+        e_sparse = calloc(size, sizeof(double));
+    }
 
     return;
 }
 
 void free_DC_matrix_and_vectors() {
 
-    if (G_tilda != NULL) {
-        gsl_matrix_free(G_tilda);
-        G_tilda = NULL;
+    if (sparse_flag == 0) {    
+        if (G_tilda != NULL) {
+            gsl_matrix_free(G_tilda);
+            G_tilda = NULL;
+        }
+        if (e != NULL) {
+            gsl_vector_free(e);
+            e = NULL;
+        }
+
     }
-    if (e != NULL) {
-        gsl_vector_free(e);
-        e = NULL;
+    else {
+        if (G_tilda_sparse != NULL) {
+            cs_spfree(G_tilda_sparse);
+            G_tilda_sparse = NULL;
+        }
+        if (e_sparse != NULL) {
+            free(e_sparse);
+            e_sparse = NULL;
+        }
     }
 
     for (int i = 0; i < group_2_size; i++) {
         free(group2[i].name);
     }
     free(group2);
+
+    
     return;
 }
 
@@ -67,14 +95,33 @@ void DC_add_group_1_element(int pos, element_type type) {
 
             // "stamp" the current source into the e vector
             if(pos_node == 0) {
-                gsl_vector_set(e, neg_node-1, gsl_vector_get(e, neg_node-1) + SourcesArray[pos].value);
+                if (sparse_flag == 0) {
+                    gsl_vector_set(e, neg_node-1, gsl_vector_get(e, neg_node-1) + SourcesArray[pos].value);
+                }
+                else {
+                    e_sparse[neg_node-1] = e_sparse[neg_node-1] + SourcesArray[pos].value;
+                }
             }
             else if (neg_node == 0) {
-                gsl_vector_set(e, pos_node-1, gsl_vector_get(e, pos_node-1) - SourcesArray[pos].value);
+                if (sparse_flag == 0) {
+                    gsl_vector_set(e, pos_node-1, gsl_vector_get(e, pos_node-1) - SourcesArray[pos].value);
+                }
+                else {
+                    e_sparse[pos_node-1] = e_sparse[pos_node-1] - SourcesArray[pos].value;
+                }
+            
             }
             else {
-                gsl_vector_set(e, pos_node-1, gsl_vector_get(e, pos_node-1) - SourcesArray[pos].value);
-                gsl_vector_set(e, neg_node-1, gsl_vector_get(e, neg_node-1) + SourcesArray[pos].value);
+                if (sparse_flag == 0) {
+                    gsl_vector_set(e, neg_node-1, gsl_vector_get(e, neg_node-1) + SourcesArray[pos].value);
+                    gsl_vector_set(e, pos_node-1, gsl_vector_get(e, pos_node-1) - SourcesArray[pos].value);
+
+                }
+                else {
+                    e_sparse[neg_node-1] = e_sparse[neg_node-1] + SourcesArray[pos].value;
+                    e_sparse[pos_node-1] = e_sparse[pos_node-1] - SourcesArray[pos].value;
+
+                }            
             }
             break;
 
@@ -181,8 +228,13 @@ void DC_add_group_2_element(int pos, element_type type) {
         }
 
         // update e vector
-        gsl_vector_set(e, group_2_index, SourcesArray[pos].value);
-        // printf("JUST ADDED G2 ON [%d]\n", group_2_index);
+        if (sparse_flag == 0) {
+            gsl_vector_set(e, group_2_index, SourcesArray[pos].value);
+            // printf("JUST ADDED G2 ON [%d]\n", group_2_index);
+        }
+        else {
+            e_sparse[group_2_index] = SourcesArray[pos].value;
+        }
         group_2_index++;
         
         group2 = realloc(group2, (group_2_index - matrix_index + 1)*sizeof(G2_elementT));
@@ -266,16 +318,6 @@ void create_DC_system() {
         curr = curr->nxt;
     }
 
-    // printf("22222222222222_CREATE_DC_SYSTEM:\n G_tilda[%ld][%ld]\n", G_tilda->size1, G_tilda->size2);
-    // gsl_matrix_set(G_tilda,10,10, gsl_matrix_get(G_tilda,10,10));
-    // printf("matrix_index:%d\n",matrix_index);
-    // printf("group2_index now:%d\n", group_2_index);
-    // printf("group2 size:%d\n", group_2_size);
-
-    // printf("22222222222222\n");
-
-    // print_DC_system();
-
 }
 
 void print_DC_system() {
@@ -292,6 +334,30 @@ void print_DC_system() {
         printf("[x%zu]   [%.2f]\n", i + 1, gsl_vector_get(e, i));
     }
 
+}
+
+void print_sparse(cs *A) {
+    if (A == NULL) {
+        printf("sparse matrix is null\n");
+        return;
+    }
+
+    if (A->nz < 0) {
+        printf("Matrix is not in triplet form, it is compressed\n");
+        for (int j = 0; j < A->n; j++) {
+            for (int p = A->p[j]; p < A->p[j+1]; p++) {
+                printf("(%d, %d) = %g\n", A->i[p], j, A->x[p]);
+            }
+        }
+        
+        return;
+    }
+
+    printf("Number of entries(nz): %d\n", A->nz);
+    printf("Triplet form:\n");
+    for (int i=0; i<A->nz; i++) {
+        printf("  [%d][%d] = %g\n", A->i[i], A->p[i], A->x[i]);
+    }
 }
 
 
@@ -508,68 +574,184 @@ void operating_point_DC_analysis() {
     gsl_matrix *A = NULL;
     gsl_vector *b = NULL;
     gsl_vector *x = NULL;
-    gsl_permutation *p = gsl_permutation_alloc(G_tilda->size1);
-    gsl_permutation_init(p);
+    gsl_permutation *p = NULL;
 
     create_DC_system();
 
-    print_DC_system();
+    if (sparse_flag == 0) {
+      
+        print_DC_system();
 
-    A = gsl_matrix_alloc(G_tilda->size1, G_tilda->size1);
-    b = gsl_vector_alloc(e->size);
-    x = gsl_vector_calloc(e->size);
+        // p = gsl_permutation_alloc(G_tilda->size1);
+        // gsl_permutation_init(p);
 
-    gsl_matrix_memcpy(A, G_tilda);
-    gsl_vector_memcpy(b, e);
-    if(iterative_flag == 1) {
 
-        if(cholesky_flag ==1) {
-            solve_CG(A, b, x, tolerance);
-            printf("Solved DC system using Conjugate Gradient method\n");
-        }
-        else{
-            solve_BiCG(A, b, x, tolerance);
-            printf("Solved DC system using Bi-CG method\n");
-        }
-    }
-    else {
+        A = gsl_matrix_alloc(G_tilda->size1, G_tilda->size1);
+        b = gsl_vector_alloc(e->size);
+        x = gsl_vector_calloc(e->size);
 
-        if (cholesky_flag == 1) {
-            if (custom_flag == 1) {
-                cholesky_decomp_custom(A);
-                solve_cholesky_system(A, b, x);
-                printf("Solved DC system using Custom Cholesky method\n");
+        gsl_matrix_memcpy(A, G_tilda);
+        gsl_vector_memcpy(b, e);
+        if(iterative_flag == 1) {
+
+            if(cholesky_flag ==1) {
+                solve_CG(A, b, x, tolerance);
+                printf("Solved DC system using Conjugate Gradient method\n");
             }
-            else {
-                gsl_linalg_cholesky_decomp(A);
-                gsl_linalg_cholesky_solve(A, b, x);
-                printf("Solved DC system using GSL Cholesky method\n");
+            else{
+                solve_BiCG(A, b, x, tolerance);
+                printf("Solved DC system using Bi-CG method\n");
             }
         }
         else {
-            int signum;
-            if(custom_flag == 1) {
-                lu_decomposition(A, p, &signum);
-                solve_lu_system(A, p, b, x);
-                printf("Solved DC system using Custom LU method\n");
+
+            if (cholesky_flag == 1) {
+                if (custom_flag == 1) {
+                    cholesky_decomp_custom(A);
+                    solve_cholesky_system(A, b, x);
+                    printf("Solved DC system using Custom Cholesky method\n");
+                }
+                else {
+                    gsl_linalg_cholesky_decomp(A);
+                    gsl_linalg_cholesky_solve(A, b, x);
+                    printf("Solved DC system using GSL Cholesky method\n");
+                }
             }
             else {
-                gsl_linalg_LU_decomp(A, p, &signum);
-                gsl_linalg_LU_solve(A, p, e, x);
-                printf("Solved DC system using GSL LU method\n");
-            }
-            gsl_permutation_free(p);
-        }
-    }
- 
-    printf("Saving operating point DC analysis results to ../output/dc_op.txt\n");
-    print_operating_point_DC_analysis(x);
+                int signum;
+                p = gsl_permutation_alloc(G_tilda->size1);
+                gsl_permutation_init(p);
 
-    gsl_matrix_free(A);
-    gsl_vector_free(b);
-    gsl_vector_free(x);
+                if(custom_flag == 1) {
+                    
+                    lu_decomposition(A, p, &signum);
+                    solve_lu_system(A, p, b, x);
+                    printf("Solved DC system using Custom LU method\n");
+                }
+                else {
+                    gsl_linalg_LU_decomp(A, p, &signum);
+                    gsl_linalg_LU_solve(A, p, e, x);
+                    printf("Solved DC system using GSL LU method\n");
+                }
+                gsl_permutation_free(p);
+            }
+        }
+    
+        printf("Saving operating point DC analysis results to ../output/dc_op.txt\n");
+        print_operating_point_DC_analysis(x);
+        // print_operating_point_DC_analysis_dense(const gsl_vector *x)
+
+
+        gsl_matrix_free(A);
+        gsl_vector_free(b);
+        gsl_vector_free(x);
+    }
+    else {
+        print_sparse(G_tilda_sparse);
+        A_csc = cs_triplet(G_tilda_sparse);
+        cs_dupl(A_csc);
+
+        cs_spfree(G_tilda_sparse);
+        G_tilda_sparse = A_csc;
+
+        print_sparse(G_tilda_sparse);
+
+        int n = A_csc->n;
+        double *x = (double*) calloc(n, sizeof(double));
+        double *y = (double*) malloc(n * sizeof(double));   
+
+        if (iterative_flag == 1) {
+
+            if(cholesky_flag ==1) {
+                solve_CG_sparse(A_csc, e_sparse, x, tolerance);
+                printf("Solved DC system using Conjugate Gradient method\n");
+            }
+            else{
+                solve_BiCG_sparse(A_csc, e_sparse, x, tolerance);
+                printf("Solved DC system using Bi-CG method\n");
+            }
+
+        }
+        else {
+            if (cholesky_flag == 1) {
+                css *S = cs_schol(A_csc,1);
+                csn *N = cs_chol(A_csc, S);
+
+                //solve x = A^(-1) b
+                cs_ipvec(n, S->Pinv, e_sparse, y);  // y = P*b
+                cs_lsolve(N->L, y);                 // y = L\y
+                cs_ltsolve(N->L, y);                // y = L'\y
+                cs_pvec(n, S->Pinv, y, x);          // x = P'*y
+
+                cs_sfree(S);
+                cs_nfree(N);
+
+            }
+            else {
+                double tol = 1e-12;
+                css *S = cs_sqr(A_csc, 2, 0);
+                csn *N = cs_lu(A_csc, S, tol);
+
+                // Solve: x = A^{-1} b
+                cs_ipvec(n, N->Pinv, e_sparse, y);  // y = P*b
+                cs_lsolve(N->L, y);                 // y = L\y
+                cs_usolve(N->U, y);                 // y = U\y
+                cs_pvec(n, S->Q, y, x);             // x = Q*y
+
+                cs_sfree(S);
+                cs_nfree(N);
+            }
+
+        }
+        
+        print_operating_point_DC_analysis_sparse(x, n);
+        free(x);
+        free(y);
+
+    }
 
     free_DC_matrix_and_vectors();
+}
+
+void print_operating_point_DC_analysis_sparse(const double *x, int n){
+    unsigned int i;
+    FILE *fp = NULL;
+    char filename[] = "../output/dc_op.txt";
+    node *curr = NULL;
+    int k;
+
+    
+    fp = fopen(filename, "w");
+
+    for (i = 0; i < hsh_tbl.size; i++) {
+        curr = hsh_tbl.table[i];
+        while(curr != NULL) {
+            if (curr->index != 0) {
+                fprintf(fp, "V(%s) = %g\n", curr->name, x[curr->index - 1]);
+            }
+            curr = curr->nxt;
+        }
+    }
+
+    for (k = 0; k < ( group_2_size); k++) {
+        
+        fprintf(fp, "v%s#branch = %g\n", group2[k].name, x[group2[k].matrix_index]);
+    }
+
+   
+    fclose(fp);
+    fp = NULL;
+}
+
+void print_operating_point_DC_analysis_dense(const gsl_vector *x)
+{
+    int n = x->size;
+
+    printf("Operating point (dense):\n");
+
+    for (int i = 0; i < n; i++) {
+        printf("x[%d] = %.10g\n", i, gsl_vector_get(x, i));
+    }
 }
 
 void print_operating_point_DC_analysis(gsl_vector *x) {
@@ -592,7 +774,7 @@ void print_operating_point_DC_analysis(gsl_vector *x) {
         }
     }
 ///////////////////////////BUG1, BUG2
-    printf("------------------------------group2 size is %d\n", group_2_size);
+    // printf("------------------------------group2 size is %d\n", group_2_size);
     // group_2_size = 3;
     for (k = 0; k < ( group_2_size); k++) {
         // printf("\n*************\n");

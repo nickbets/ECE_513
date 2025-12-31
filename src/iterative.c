@@ -25,6 +25,36 @@ static void Ax(const gsl_matrix *A, const gsl_vector *x, gsl_vector *y)
     }
 }
 
+static void Ax_sparse(const cs *A, const double *x, double *y)
+{
+    int m = A->m;
+    int n = A->n;
+
+    for (int i = 0; i < m; i++) {
+        y[i] = 0.0;
+    }
+
+    for (int j = 0; j < n; j++) {
+        for (int p = A->p[j]; p < A->p[j + 1]; p++) {
+            int i = A->i[p];
+            y[i] += A->x[p] * x[j];
+        }
+    }
+}
+
+static void Ax_transpose_sparse(const cs *A, const double *x, double *y)
+{
+    int n = A->n;
+    
+    for (int j = 0; j < A->n; j++) {
+        y[j] = 0.0;
+        for (int p = A->p[j]; p < A->p[j + 1]; p++) {
+            int i = A->i[p];
+            y[j] += A->x[p] * x[i];
+        }
+    }
+}
+
 // CG 
 int solve_CG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double tol)
 {
@@ -95,6 +125,89 @@ int solve_CG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double tol
     return 0;
 }
 
+int solve_CG_sparse(const cs *A, const double *b, double *x, double tol)
+{
+    int n = A->m;
+    int max_iter = n;
+
+    double *r = (double *)calloc(n, sizeof(double));
+    double *p = (double *)calloc(n, sizeof(double));
+    double *z = (double *)calloc(n, sizeof(double));
+    double *Ap = (double *)calloc(n, sizeof(double));
+    double *diag = (double *)calloc(n, sizeof(double));
+
+    // build Jacobi preconditioner (diagonal of A)
+    for (int j = 0; j < A->n; j++) {
+        for (int pA = A->p[j]; pA < A->p[j + 1]; pA++) {
+            int i = A->i[pA];
+            if (i == j) diag[i] = A->x[pA];
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (fabs(diag[i]) < 1e-15) diag[i] = 1.0;
+    }
+
+    // r = b - A*x
+    Ax_sparse(A, x, Ap);
+    for (int i = 0; i < n; i++) r[i] = b[i] - Ap[i];
+
+    // z = M^{-1} r, p = z
+    for (int i = 0; i < n; i++) {
+        z[i] = r[i] / diag[i];
+        p[i] = z[i];
+    }
+
+    double bnorm = 0.0;
+    for (int i = 0; i < n; i++) bnorm += b[i] * b[i];
+    bnorm = sqrt(bnorm);
+    if (bnorm == 0.0) bnorm = 1.0;
+
+    double rz = 0.0;
+    for (int i = 0; i < n; i++) rz += r[i] * z[i];
+
+    for (int k = 0; k < max_iter; k++) {
+        Ax_sparse(A, p, Ap);
+
+        double pAp = 0.0;
+        for (int i = 0; i < n; i++) pAp += p[i] * Ap[i];
+        if (fabs(pAp) < 1e-15) break;
+
+        double alpha = rz / pAp;
+
+        // x = x + alpha * p
+        for (int i = 0; i < n; i++) x[i] += alpha * p[i];
+
+        // r = r - alpha * Ap
+        for (int i = 0; i < n; i++) r[i] -= alpha * Ap[i];
+
+        // convergence check
+        double rnorm = 0.0;
+        for (int i = 0; i < n; i++) rnorm += r[i] * r[i];
+        rnorm = sqrt(rnorm);
+        if (rnorm / bnorm < tol) break;
+
+        // z = M^{-1} r
+        for (int i = 0; i < n; i++) z[i] = r[i] / diag[i];
+
+        double rz_new = 0.0;
+        for (int i = 0; i < n; i++) rz_new += r[i] * z[i];
+
+        double beta = rz_new / rz;
+
+        // p = z + beta * p
+        for (int i = 0; i < n; i++) p[i] = z[i] + beta * p[i];
+
+        rz = rz_new;
+    }
+
+    free(r);
+    free(p);
+    free(z);
+    free(Ap);
+    free(diag);
+
+    return 0;
+}
 
 //  Bi-CG 
 int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double tol)
@@ -145,8 +258,11 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
 
         if (fabs(ptAp) < 1e-15) break;
 
+        // rr = rt^T z (split preconditioning consistency)
         double rr = 0;
-        for(size_t i=0;i<n;i++) rr += gsl_vector_get(r,i)*gsl_vector_get(rt,i);
+        for(size_t i=0;i<n;i++) rr += gsl_vector_get(rt,i)*gsl_vector_get(z,i);
+
+        if (fabs(rr) < 1e-15) break;
 
         double alpha = rr / ptAp;
 
@@ -167,8 +283,11 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
         apply_precond(A, r, z);
         apply_precond(A, rt, zt);
 
+        // rr_new = rt^T z after preconditioning
         double rr_new = 0;
-        for(size_t i=0;i<n;i++) rr_new += gsl_vector_get(r,i)*gsl_vector_get(rt,i);
+        for(size_t i=0;i<n;i++) rr_new += gsl_vector_get(rt,i)*gsl_vector_get(z,i);
+
+        if (fabs(rr) < 1e-15) break;
 
         double beta = rr_new / rr;
 
@@ -183,7 +302,7 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
         rr = rr_new;
     }
 
-    printf("BiCG finished in %d iterations\n", k);
+    printf("BiCG finished in %d/%d iterations\n", k, max_iter);
 
     gsl_vector_free(r);
     gsl_vector_free(rt);
@@ -193,6 +312,104 @@ int solve_BiCG(const gsl_matrix *A, const gsl_vector *b, gsl_vector *x, double t
     gsl_vector_free(zt);
     gsl_vector_free(Ap);
     gsl_vector_free(ATpt);
+
+    return 0;
+}
+
+int solve_BiCG_sparse(const cs *A, const double *b, double *x, double tol)
+{
+    int n = A->m;
+    int max_iter = n;
+
+    double *r    = (double *)calloc(n, sizeof(double));
+    double *rt   = (double *)calloc(n, sizeof(double));
+    double *p    = (double *)calloc(n, sizeof(double));
+    double *pt   = (double *)calloc(n, sizeof(double));
+    double *z    = (double *)calloc(n, sizeof(double));
+    double *zt   = (double *)calloc(n, sizeof(double));
+    double *Ap   = (double *)calloc(n, sizeof(double));
+    double *ATpt = (double *)calloc(n, sizeof(double));
+    double *diag = (double *)calloc(n, sizeof(double));
+
+    for (int j = 0; j < A->n; j++) {
+        for (int pA = A->p[j]; pA < A->p[j + 1]; pA++) {
+            int i = A->i[pA];
+            if (i == j) diag[i] = A->x[pA];
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        if (fabs(diag[i]) < 1e-15) diag[i] = 1.0;
+    }
+
+    Ax_sparse(A, p, Ap);
+    for (int i = 0; i < n; i++) r[i] = b[i] - Ap[i];
+    for (int i = 0; i < n; i++) rt[i] = r[i];
+
+    for (int i = 0; i < n; i++) {
+        z[i]  = r[i]  / diag[i];
+        zt[i] = rt[i] / diag[i];
+        p[i]  = z[i];
+        pt[i] = zt[i];
+    }
+
+    double bnorm = 0.0;
+    for (int i = 0; i < n; i++) bnorm += b[i] * b[i];
+    bnorm = sqrt(bnorm);
+    if (bnorm == 0.0) bnorm = 1.0;
+
+    double rr = 0.0;
+    for (int i = 0; i < n; i++) rr += rt[i] * z[i];
+
+    for (int k = 0; k < max_iter; k++) {
+        Ax_sparse(A, p, Ap);
+        Ax_transpose_sparse(A, pt, ATpt);
+
+        double ptAp = 0.0;
+        for (int i = 0; i < n; i++) ptAp += pt[i] * Ap[i];
+        if (fabs(ptAp) < 1e-15) break;
+        if (fabs(rr) < 1e-15) break;
+
+        double alpha = rr / ptAp;
+
+        for (int i = 0; i < n; i++) x[i] += alpha * p[i];
+        for (int i = 0; i < n; i++) {
+            r[i]  -= alpha * Ap[i];
+            rt[i] -= alpha * ATpt[i];
+        }
+
+        double rnorm = 0.0;
+        for (int i = 0; i < n; i++) rnorm += r[i] * r[i];
+        rnorm = sqrt(rnorm);
+        if (rnorm / bnorm < tol) break;
+
+        for (int i = 0; i < n; i++) {
+            z[i]  = r[i]  / diag[i];
+            zt[i] = rt[i] / diag[i];
+        }
+
+        double rr_new = 0.0;
+        for (int i = 0; i < n; i++) rr_new += rt[i] * z[i];
+        if (fabs(rr) < 1e-15) break;
+
+        double beta = rr_new / rr;
+
+        for (int i = 0; i < n; i++) {
+            p[i]  = z[i]  + beta * p[i];
+            pt[i] = zt[i] + beta * pt[i];
+        }
+
+        rr = rr_new;
+    }
+
+    free(r);
+    free(rt);
+    free(p);
+    free(pt);
+    free(z);
+    free(zt);
+    free(Ap);
+    free(ATpt);
+    free(diag);
 
     return 0;
 }
