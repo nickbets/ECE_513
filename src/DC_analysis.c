@@ -585,7 +585,6 @@ void operating_point_DC_analysis() {
         // p = gsl_permutation_alloc(G_tilda->size1);
         // gsl_permutation_init(p);
 
-
         A = gsl_matrix_alloc(G_tilda->size1, G_tilda->size1);
         b = gsl_vector_alloc(e->size);
         x = gsl_vector_calloc(e->size);
@@ -640,7 +639,6 @@ void operating_point_DC_analysis() {
         printf("Saving operating point DC analysis results to ../output/dc_op.txt\n");
         print_operating_point_DC_analysis(x);
         // print_operating_point_DC_analysis_dense(const gsl_vector *x)
-
 
         gsl_matrix_free(A);
         gsl_vector_free(b);

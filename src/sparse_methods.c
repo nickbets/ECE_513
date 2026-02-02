@@ -2,6 +2,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include "structs.h"
+# include "DC_analysis.h"
 
 void count_non_zeros(){
     list_elementT *curr;

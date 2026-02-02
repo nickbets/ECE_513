@@ -2031,18 +2031,19 @@ I28 N811 0 0.0001
 I29 N841 0 0.0009
 I30 N871 0 0.0002
 
-*.OPTIONS ITER 
-
+.OPTIONS SPD CUSTOM ITER SPARSE
+.ITOL=10e-6
 *.DC I1 0 0.01 0.001
 *.PLOT V(N1)
 *.DC I2 0 0.01 0.001
 *.PLOT V(N31)
 
-.control
-  op
-  print all > dc_op_ngspice.txt
-  dc i1 0 0.01 0.001
-  wrdata dc_sweep_i1_v(n1)_ngspice.txt v(n1)
-  dc i2 0 0.01 0.001
-  wrdata dc_sweep_i2_v(n31)_ngspice.txt v(n31)
-.endc
+*.control
+*  op
+*  print all > output/dc_op_ngspice.txt
+*  dc i1 0 0.01 0.001
+*  wrdata dc_sweep_i1_v(n1)_ngspice.txt v(n1)
+*  dc i2 0 0.01 0.001
+*  wrdata dc_sweep_i2_v(n31)_ngspice.txt v(n31)
+*.endc
+*
