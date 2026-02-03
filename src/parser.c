@@ -92,6 +92,7 @@ int read_file(char *filename) {
                         tolerance = strtod(&words[0][6], NULL);
                         printf("Set iterative solver tolerance to %g\n", tolerance);
                     }
+                    
                     break;
                 default:
                     printf("random line\n");
@@ -126,6 +127,7 @@ int read_file(char *filename) {
         }
         else {
             words = split_line(line, &size);
+           
             if (size != 0) {
                 switch (words[0][0])
                 {
@@ -133,6 +135,9 @@ int read_file(char *filename) {
                 case 'v':
                 case 'I':
                 case 'i':
+                for (int i=0; i<size; i++) {
+                    // printf("words[%d]: %s\n", i, words[i]);
+                }
                     //initialize name
                     len = strlen(&(words[0][1]));//den ginetai na einai to R mono toy, sosta???
                     SourcesArray[source_index].name = (char*)malloc((len+1)*sizeof(char));
@@ -160,6 +165,7 @@ int read_file(char *filename) {
                     //initialize value
                     SourcesArray[source_index].value = strtod(words[3], NULL);
 
+
                     //initialize type
                     switch (words[0][0])
                     {
@@ -171,7 +177,121 @@ int read_file(char *filename) {
                     case 'i':
                         SourcesArray[source_index].type = I;
                         break;
-                    } 
+                    }
+
+                    //initialize EXP/SIN/PULSE/PWL
+                    SourcesArray[source_index].EXP = NULL;
+                    SourcesArray[source_index].SIN = NULL;
+                    SourcesArray[source_index].PULSE = NULL;
+                    SourcesArray[source_index].PWL = NULL;
+
+                    if (size > 4) {
+                        // printf("----------------SIZE Is  %d\n", size);  
+                        switch(words[4][1]) {
+                        case 'X'://EXP
+                            SourcesArray[source_index].EXP = (double*)malloc(6*sizeof(double));
+                            if (SourcesArray[source_index].EXP == NULL) {
+                                fprintf(stderr, "Malloc for EXP failed\n");
+                            }
+
+                            //consider that words[5] and words[10] have the parenthesis---> (i1 and tc2)
+                            len = strlen(words[10]);
+                            words[10][len-1] = '\0';
+
+                            SourcesArray[source_index].EXP[0] = strtod(&(words[5][1]), NULL);
+                            for (int i=1; i<6; i++) {
+                                SourcesArray[source_index].EXP[i] = strtod(words[5+i], NULL); 
+                            }
+                           
+                        //    printf("------printing EXP array:\n");
+                        //    for (int i=0; i<6; i++) {
+                        //     printf("%f\n", SourcesArray[source_index].EXP[i]);
+                        //    }
+
+                            break;
+                        case 'I'://SIN
+                            SourcesArray[source_index].SIN = (double*)malloc(6*sizeof(double));
+                            if (SourcesArray[source_index].SIN == NULL) {
+                                fprintf(stderr, "Malloc for SIN failed\n");
+                            }
+
+                            //consider that words[5] and words[10] have the parenthesis---> (i1 and tc2)
+                            len = strlen(words[10]);
+                            words[10][len-1] = '\0';
+
+                            SourcesArray[source_index].SIN[0] = strtod(&(words[5][1]), NULL);
+                            for (int i=1; i<6; i++) {
+                                SourcesArray[source_index].SIN[i] = strtod(words[5+i], NULL); 
+                            }
+
+                    //        printf("------printing SIN array:\n");
+                    //    for (int i=0; i<6; i++) {
+                    //     printf("%f\n", SourcesArray[source_index].SIN[i]);
+                    //    }
+
+                            break;
+                        case 'U'://PULSE
+                            SourcesArray[source_index].PULSE = (double*)malloc(7*sizeof(double));
+                            if (SourcesArray[source_index].PULSE == NULL) {
+                                fprintf(stderr, "Malloc for PULSE failed\n");
+                            }
+
+                            //consider that words[5] and words[10] have the parenthesis---> (i1 and tc2)
+                            len = strlen(words[10]);
+                            words[10][len-1] = '\0';
+
+                            SourcesArray[source_index].PULSE[0] = strtod(&(words[5][1]), NULL);
+                            for (int i=1; i<7; i++) {
+                                SourcesArray[source_index].PULSE[i] = strtod(words[5+i], NULL); 
+                            }
+
+                        //        printf("------printing PULSE array:\n");
+                        //    for (int i=0; i<7; i++) {
+                        //     printf("%f\n", SourcesArray[source_index].PULSE[i]);
+                        //    }
+                            break;
+                        case 'W': { //PWL
+
+                            int points = (size - 5)/2;
+                            // printf("*********we have %d points\n", points);
+                            
+                            SourcesArray[source_index].PWL = (double**)malloc(3*sizeof(double*));
+                            if (SourcesArray[source_index].PWL == NULL) {
+                                fprintf(stderr, "Malloc for PWL failed\n");
+                            }
+
+                            SourcesArray[source_index].PWL[0] = (double*)malloc(points*sizeof(double));
+                            SourcesArray[source_index].PWL[1] = (double*)malloc(points*sizeof(double));
+                            SourcesArray[source_index].PWL[2] = (double*)malloc(sizeof(double));
+                            *(SourcesArray[source_index].PWL[2]) = points;
+
+
+                            for (int i=0, j=0; i<points; i++, j = j+2) {
+                                SourcesArray[source_index].PWL[0][i] = strtod(&(words[5+j][1]), NULL);
+                            }
+                            for (int i=0, j=0; i<points; i++, j = j+2) {
+                                len = strlen(words[6+j]);
+                                words[6+j][len-1] = '\0';
+
+                                SourcesArray[source_index].PWL[1][i] = strtod(words[6+j], NULL);
+                            }
+                            SourcesArray[source_index].pwl_points = points;
+
+                            //   printf("-----------------------------------------------------printing PWL arrays\n");
+                            // for (int i=0; i<points; i++) {
+                            //     printf("pwl[0][%d]:%f\n", i, SourcesArray[source_index].PWL[0][i]);
+                            // }
+                            // for (int i=0; i<points; i++) {
+                            //     printf("pwl[1][%d]:%f\n", i, SourcesArray[source_index].PWL[1][i]);
+                            // }
+                            // break;
+
+                          
+                        }
+                    }
+                    }
+
+
                     list_add(source_index,SOURCE);
 
                     source_index++;
@@ -429,6 +549,21 @@ void free_arr() {
         free(SourcesArray[i].name);
         free(SourcesArray[i].pos_node);
         free(SourcesArray[i].neg_node);
+        if (SourcesArray[i].EXP != NULL) {
+            free(SourcesArray[i].EXP);
+        }
+        if (SourcesArray[i].SIN != NULL) {
+            free(SourcesArray[i].SIN);
+        }
+        if (SourcesArray[i].PULSE != NULL) {
+            free(SourcesArray[i].PULSE);
+        }
+        if (SourcesArray[i].PWL != NULL) {
+            free(SourcesArray[i].PWL[0]);
+            free(SourcesArray[i].PWL[1]);
+            free(SourcesArray[i].PWL[2]);
+            free(SourcesArray[i].PWL);
+        }
     }
     if (sSize != 0) {
         free(SourcesArray);

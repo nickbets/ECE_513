@@ -66,7 +66,12 @@ struct Sources {
     char *pos_node;
     char *neg_node;
     double value;
-    enum SourceType type;    
+    enum SourceType type;
+    double *EXP;
+    double *SIN;
+    double *PULSE;
+    double **PWL; 
+    int pwl_points;   
 };
 typedef struct Sources SourcesT;
 
@@ -121,6 +126,8 @@ extern int cholesky_flag;
 extern int custom_flag;
 extern int iterative_flag;
 extern int sparse_flag;
+extern int transient_BE_flag;
+extern int transient_TR_flag;
 extern G2_elementT *group2;
 extern gsl_vector **dc_sweep_solutions;
 extern int dc_sweep_size;
@@ -132,7 +139,14 @@ extern cs *G_tilda_sparse;
 extern double *e_sparse;
 extern cs *A_csc;
 
+extern gsl_matrix *C_tilda; // matrix C_tilda
+extern cs *C_tilda_sparse;
 
+extern double time_step;
+extern double stop_time;
+extern int plot_variables_size;
+extern double **plot_variable_names; // arrray of strings with the names of the variables to be plotted
+extern int **plot_variable_values; // array of integers [variable_size][time_steps] with the values of the variables to be plotted
 
 unsigned int hash_function(const char *key, unsigned int table_size);
 void init_node_hashtable(unsigned int size);

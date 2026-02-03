@@ -580,7 +580,7 @@ void operating_point_DC_analysis() {
 
     if (sparse_flag == 0) {
       
-        print_DC_system();
+        // print_DC_system();
 
         // p = gsl_permutation_alloc(G_tilda->size1);
         // gsl_permutation_init(p);
@@ -607,11 +607,15 @@ void operating_point_DC_analysis() {
             if (cholesky_flag == 1) {
                 if (custom_flag == 1) {
                     cholesky_decomp_custom(A);
+                    printf("Starting Custom Cholesky decomposition\n");
+                    printf("Finished Custom Cholesky decomposition\n");
                     solve_cholesky_system(A, b, x);
                     printf("Solved DC system using Custom Cholesky method\n");
                 }
                 else {
+                    printf("Starting GSL Cholesky decomposition\n");
                     gsl_linalg_cholesky_decomp(A);
+                    printf("Finished GSL Cholesky decomposition\n");
                     gsl_linalg_cholesky_solve(A, b, x);
                     printf("Solved DC system using GSL Cholesky method\n");
                 }
@@ -622,13 +626,16 @@ void operating_point_DC_analysis() {
                 gsl_permutation_init(p);
 
                 if(custom_flag == 1) {
-                    
+                    printf("Starting Custom LU decomposition\n");
                     lu_decomposition(A, p, &signum);
+                    printf("Finished Custom LU decomposition\n");
                     solve_lu_system(A, p, b, x);
                     printf("Solved DC system using Custom LU method\n");
                 }
                 else {
+                    printf("Starting GSL LU decomposition\n");
                     gsl_linalg_LU_decomp(A, p, &signum);
+                    printf("Finished GSL LU decomposition\n");
                     gsl_linalg_LU_solve(A, p, e, x);
                     printf("Solved DC system using GSL LU method\n");
                 }

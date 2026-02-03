@@ -20,6 +20,14 @@ cs *G_tilda_sparse = NULL; // sparse matrix G_tilda
 double *e_sparse = NULL; // sparse excitation vector e
 cs *A_csc = NULL;
 
+gsl_matrix *C_tilda = NULL; // matrix C_tilda
+cs *C_tilda_sparse = NULL;
+double time_step = 0.0;
+double stop_time = 0.0;
+int plot_variables_size = 0;
+double **plot_variable_names = NULL; // arrray of strings with the names of the variables to be plotted
+int **plot_variable_values = NULL; // array of integers [variable_size][time_steps]
+
 char** commands = NULL;
 int commands_size = 0;
 
@@ -27,6 +35,8 @@ int cholesky_flag = 0;
 int custom_flag = 0;
 int iterative_flag = 0;
 int sparse_flag = 0;
+int transient_BE_flag = 0;
+int transient_TR_flag = 0;
 
 G2_elementT *group2 = NULL;
 
