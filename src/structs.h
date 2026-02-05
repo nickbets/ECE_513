@@ -160,6 +160,7 @@ enum group get_element_group(element_type type, int pos);
 void create_DC_system();
 void init_commands();
 void free_commands();
-
+void backward_substitution_cholesky(gsl_matrix *A, gsl_vector *y, gsl_vector *x);
+void forward_substitution_cholesky(gsl_matrix *A, gsl_vector *b, gsl_vector *y);
 
 #endif

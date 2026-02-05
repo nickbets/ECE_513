@@ -5,7 +5,6 @@
 #include "parser.h"
 
 
-
 int read_file(char *filename) {
     FILE *file;
     char line[MAX_LINE_SIZE];
@@ -85,12 +84,29 @@ int read_file(char *filename) {
                             {
                                 sparse_flag = 1;
                             }
-                            
+                            if (strncmp(words[i], "METHOD", 6) == 0) {
+                                if (strcmp(&words[i][7], "BE") == 0) {
+                                    transient_BE_flag = 1;
+                                }
+                                else if (strcmp(&words[i][7], "TR") == 0) {
+                                    transient_TR_flag = 1;
+                                }
+                            }
                         }
                     }
                     if (strncmp(words[0],".ITOL", 5) == 0) {
                         tolerance = strtod(&words[0][6], NULL);
                         printf("Set iterative solver tolerance to %g\n", tolerance);
+                    }
+                    if (strncmp(words[0],".TRAN", 5) == 0) {
+                        time_step = strtod(words[1], NULL);
+                        stop_time = strtod(words[2], NULL);
+                        printf("Set transient analysis time step to %g and stop time to %g\n", time_step, stop_time);
+                        if (transient_BE_flag == 0)
+                        {
+                            transient_TR_flag = 1;
+                            printf("Defaulting to TR method for transient analysis\n");
+                        }
                     }
                     
                     break;

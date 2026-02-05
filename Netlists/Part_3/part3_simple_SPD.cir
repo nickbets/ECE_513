@@ -24,13 +24,13 @@ Rg2  _n_50_00_ 0 100
 Isrc _n_00_00_  0 10
 
 
-.OPTIONS SPD
-.DC Isrc 0 11 1
-.PLOT V(_n_00_00_)
+*.OPTIONS SPD CUSTOM
+*.DC Isrc 0 11 1
+*.PLOT V(_n_00_00_)
 
-*.control
-*  op
-*  print all > dc_op_ngspice.txt
-*  dc Isrc 0 11 1
-*  wrdata dc_sweep_i1_v(_n_00_00_)_ngspice.txt v(_n_00_00_)
-*.endc
+.control
+  op
+  print all > dc_op_ngspice.txt
+  dc Isrc 0 11 1
+  wrdata dc_sweep_i1_v(_n_00_00_)_ngspice.txt v(_n_00_00_)
+.endc
